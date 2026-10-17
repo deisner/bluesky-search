@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bluesky Post Search</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>Bluesky Post Search</h1>
+    <div class="account">
+      <span id="account-status">Not signed in</span>
+      <button type="button" id="signin-btn" class="secondary">Sign in</button>
+      <button type="button" id="signout-btn" class="secondary" hidden>Sign out</button>
+    </div>
+  </header>
+
+  <main>
+    <form id="search-form" novalidate>
+      <div class="tabs" role="tablist">
+        <button type="button" role="tab" class="tab" data-mode="search" aria-selected="true">Search posts</button>
+        <button type="button" role="tab" class="tab" data-mode="author" aria-selected="false">All posts from a person</button>
+      </div>
+      <input type="hidden" name="mode" value="search">
+
+      <!-- Search mode: app.bsky.feed.searchPosts -->
+      <fieldset class="mode-panel" data-mode="search">
+        <legend class="visually-hidden">Search options</legend>
+        <label class="wide">
+          <span>Search words <em>(required)</em></span>
+          <input type="search" name="q" placeholder='e.g. crossword  or  "new yorker" -cartoon' autocomplete="off">
+          <small>
+            Supports phrases in quotes, <code>-word</code> to exclude, and inline operators like
+            <code>from:handle</code>, <code>to:handle</code>, <code>mentions:handle</code>,
+            <code>lang:en</code>, <code>domain:nytimes.com</code>, <code>since:2025-01-01</code>,
+            <code>until:2025-02-01</code>, <code>#tag</code>.
+          </small>
+        </label>
+        <label>
+          <span>Sort</span>
+          <select name="sort">
+            <option value="latest">Latest first</option>
+            <option value="top">Top (most relevant/popular)</option>
+          </select>
+        </label>
+        <label>
+          <span>Posted by <small>(author)</small></span>
+          <input type="text" name="author" list="author-list" placeholder="handle.bsky.social or did:plc:…" autocomplete="off" data-typeahead>
+          <datalist id="author-list"></datalist>
+        </label>
+        <label>
+          <span>Mentions</span>
+          <input type="text" name="mentions" list="mentions-list" placeholder="handle that is @-mentioned" autocomplete="off" data-typeahead>
+          <datalist id="mentions-list"></datalist>
+        </label>
+        <label>
+          <span>Language</span>
+          <input type="text" name="lang" list="lang-list" placeholder="e.g. en" autocomplete="off">
+          <datalist id="lang-list">
+            <option value="en">English</option><option value="es">Spanish</option>
+            <option value="fr">French</option><option value="de">German</option>
+            <option value="it">Italian</option><option value="pt">Portuguese</option>
+            <option value="nl">Dutch</option><option value="ja">Japanese</option>
+            <option value="ko">Korean</option><option value="zh">Chinese</option>
+            <option value="ru">Russian</option><option value="uk">Ukrainian</option>
+            <option value="pl">Polish</option><option value="sv">Swedish</option>
+            <option value="tr">Turkish</option><option value="ar">Arabic</option>
+            <option value="he">Hebrew</option><option value="hi">Hindi</option>
+          </datalist>
+        </label>
+        <label>
+          <span>Links to domain</span>
+          <input type="text" name="domain" placeholder="e.g. newyorker.com" autocomplete="off">
+        </label>
+        <label>
+          <span>Links to URL</span>
+          <input type="url" name="url" placeholder="https://…" autocomplete="off">
+        </label>
+        <label>
+          <span>Hashtags <small>(all must match)</small></span>
+          <input type="text" name="tags" placeholder="e.g. books, poetry" autocomplete="off">
+        </label>
+      </fieldset>
+
+      <!-- Author mode: app.bsky.feed.getAuthorFeed -->
+      <fieldset class="mode-panel" data-mode="author" hidden>
+        <legend class="visually-hidden">Author feed options</legend>
+        <label class="wide">
+          <span>Person <em>(required)</em></span>
+          <input type="text" name="actor" list="actor-list" placeholder="handle.bsky.social or did:plc:…" autocomplete="off" data-typeahead>
+          <datalist id="actor-list"></datalist>
+          <small>Lists everything this person posted, newest first, then keeps only posts inside your date range.</small>
+        </label>
+        <label>
+          <span>Include</span>
+          <select name="filter">
+            <option value="posts_with_replies">Posts and replies</option>
+            <option value="posts_no_replies">Posts only (no replies)</option>
+            <option value="posts_and_author_threads">Posts and self-threads</option>
+            <option value="posts_with_media">Only posts with images/media</option>
+            <option value="posts_with_video">Only posts with video</option>
+          </select>
+        </label>
+        <label>
+          <span>Containing text <small>(optional)</small></span>
+          <input type="text" name="contains" placeholder="filter by words" autocomplete="off">
+        </label>
+        <label class="check">
+          <input type="checkbox" name="reposts" checked>
+          <span>Include reposts</span>
+        </label>
+        <label class="check">
+          <input type="checkbox" name="pins">
+          <span>Include pinned post</span>
+        </label>
+      </fieldset>
+
+      <!-- Shared options -->
+      <fieldset class="shared">
+        <legend class="visually-hidden">Date range and amount</legend>
+        <div class="daterange">
+          <label>
+            <span>From date</span>
+            <input type="date" name="since">
+          </label>
+          <label>
+            <span>time <small>(optional)</small></span>
+            <input type="time" name="sinceTime">
+          </label>
+          <label>
+            <span>Through date</span>
+            <input type="date" name="until">
+          </label>
+          <label>
+            <span>time <small>(optional)</small></span>
+            <input type="time" name="untilTime">
+          </label>
+          <div class="quick-dates">
+            <span>Quick:</span>
+            <button type="button" class="link" data-range="1">Today</button>
+            <button type="button" class="link" data-range="7">Last 7 days</button>
+            <button type="button" class="link" data-range="30">Last 30 days</button>
+            <button type="button" class="link" data-range="365">Last year</button>
+            <button type="button" class="link" data-range="0">Clear</button>
+          </div>
+        </div>
+        <label>
+          <span>Posts to load per click</span>
+          <input type="number" name="count" min="1" max="5000" value="50">
+        </label>
+        <p class="hint">Dates and times are in your local time zone. “Through date” includes that whole day.</p>
+      </fieldset>
+
+      <div class="actions">
+        <button type="submit" id="go-btn">Search</button>
+        <button type="button" id="stop-btn" class="secondary" hidden>Stop</button>
+        <button type="reset" class="secondary">Clear form</button>
+      </div>
+    </form>
+
+    <div id="error" class="error" role="alert" hidden></div>
+
+    <section id="results-section" hidden>
+      <div class="results-bar">
+        <div id="status" aria-live="polite"></div>
+        <div class="results-actions">
+          <button type="button" id="copy-link-btn" class="secondary small">Copy link to this search</button>
+          <button type="button" id="export-csv-btn" class="secondary small">Download CSV</button>
+          <button type="button" id="export-json-btn" class="secondary small">Download JSON</button>
+        </div>
+      </div>
+      <details class="request-details">
+        <summary>API request</summary>
+        <code id="request-url"></code>
+      </details>
+      <ol id="results" class="results"></ol>
+      <div class="more">
+        <button type="button" id="more-btn" hidden>Load more</button>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="signin-dialog">
+    <form id="signin-form" method="dialog">
+      <h2>Sign in to Bluesky</h2>
+      <p>
+        Bluesky sometimes requires sign-in to search. Use an <strong>app password</strong>,
+        not your main password. Create one at
+        <a href="https://bsky.app/settings/app-passwords" target="_blank" rel="noopener">Settings → Privacy and security → App passwords</a>.
+      </p>
+      <label>
+        <span>Handle or email</span>
+        <input type="text" name="identifier" autocomplete="username" required placeholder="you.bsky.social">
+      </label>
+      <label>
+        <span>App password</span>
+        <input type="password" name="password" autocomplete="current-password" required placeholder="xxxx-xxxx-xxxx-xxxx">
+      </label>
+      <label id="auth-factor-row" hidden>
+        <span>Code from email</span>
+        <input type="text" name="authFactorToken" autocomplete="one-time-code">
+      </label>
+      <p class="hint">Your password is sent only to Bluesky. The sign-in is remembered in this browser.</p>
+      <div id="signin-error" class="error" hidden></div>
+      <div class="actions">
+        <button type="submit" value="signin">Sign in</button>
+        <button type="button" class="secondary" id="signin-cancel">Cancel</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
